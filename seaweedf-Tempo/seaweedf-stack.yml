@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.23
+    command: server -s3 -s3.config /etc/seaweedfs/s3_config.json -ip.bind=0.0.0.0 -s3.port=8333
+    configs:
+      - source: s3_config
+        target: /etc/seaweedfs/s3_config.json
+#    environment:
+#      - AWS_ACCESS_KEY_ID=admin
+#      - AWS_SECRET_ACCESS_KEY=admin
+#      - S3_BUCKET=tempo-traces
+    networks:
+      - tempo-net
+    ports:
+      - "8333:8333"
+      - "9333:9333"
+      - "8888:8888"
+    volumes:
+      - seaweedfs_data:/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+
+networks:
+  tempo-net:
+    external: true
+
+volumes:
+  seaweedfs_data:
+
+configs:
+  s3_config:
+    file: ./s3_config.json

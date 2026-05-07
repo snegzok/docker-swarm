@@ -1,0 +1,41 @@
+
+
+
+server:
+  http_listen_address: "0.0.0.0"
+  http_listen_port: 3100
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        http:
+          endpoint: 0.0.0.0:4318
+        grpc:
+          endpoint: 0.0.0.0:4317
+
+ingester:
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    block_retention: 24h
+
+storage:
+  trace:
+    backend: s3
+    s3:
+      bucket: tempo-traces            # имя бакета
+      endpoint: seaweedfs:8333        # эндпоинт S3
+      access_key: admin               # ваш access key
+      secret_key: admin               # ваш secret key
+      insecure: true                  # отключаем HTTPS для внутренней сети
+      forcepathstyle: true            # для не-Amazon S3 совместимости (SeaweedFS)
+    wal:
+      path: /var/tempo/wal
+
+#overrides:
+#  defaults:
+#    search_tags:
+#      resource_attributes:
+#        - service.name

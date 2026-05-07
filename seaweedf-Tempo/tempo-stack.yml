@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  tempo:
+    image: grafana/tempo:2.10.5
+    user: "0:0"
+    command:
+      - "-config.file=/etc/tempo.yaml"
+    volumes:
+      - tempo_wal:/var/tempo/wal
+      - tempo_blocks:/var/tempo/blocks
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "3100:3100"
+      - "9411:9411"
+    networks:
+      - tempo-net
+      - monitoring
+    configs:
+      - source: tempo_config
+        target: /etc/tempo.yaml
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+
+networks:
+  tempo-net:
+    external: true
+  monitoring:
+    external: true
+
+volumes:
+  tempo_wal:
+  tempo_blocks:
+
+configs:
+  tempo_config:
+    file: ./configs/tempo.yml
