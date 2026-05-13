@@ -1,0 +1,60 @@
+# loki-stack.yml
+version: '3.8'
+
+services:
+  loki:
+    image: grafana/loki:2.9.4
+    ports:
+      - "3200:3100"
+      - "9096:9095"
+    networks:
+      - tempo-net
+    configs:
+      - source: loki_config
+        target: /etc/loki/loki.yml
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:                          # <-- Добавлен блок ресурсов
+        limits:
+          cpus: '1'                       # <-- Жёсткий лимит CPU
+          memory: 1G                      # <-- Жёсткий лимит RAM
+        reservations:
+          cpus: '0.5'                     # <-- Гарантированный минимум CPU
+          memory: 512M                    # <-- Гарантированный минимум RAM
+      placement:
+        constraints:
+          - node.role == manager
+
+
+
+  promtail:
+    image: grafana/promtail:2.9.3
+    volumes:
+      # Монтируем системные папки хоста, куда Docker пишет логи контейнеров
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log:/var/log:ro
+    command:
+      - "-config.file=/etc/promtail/config.yml"
+    configs:
+      - source: promtail_cfg
+        target: /etc/promtail/config.yml
+    networks:
+      - tempo-net  # Укажите вашу сеть, в которой запущен Loki
+    deploy:
+      mode: global # Запускает сборщик на каждом сервере Swarm
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+
+configs:
+  promtail_cfg:
+    file: ./configs/promtail-config.yml
+  loki_config:
+    file: ./configs/loki.yml
+
+networks:
+  tempo-net:
+    external: true

@@ -25,14 +25,41 @@ storage:
   trace:
     backend: s3
     s3:
-      bucket: tempo-traces            # имя бакета
-      endpoint: seaweedfs:8333        # эндпоинт S3
-      access_key: admin               # ваш access key
-      secret_key: admin               # ваш secret key
-      insecure: true                  # отключаем HTTPS для внутренней сети
-      forcepathstyle: true            # для не-Amazon S3 совместимости (SeaweedFS)
+      # Указываем имя S3-сервиса из вашей работающей сети
+      endpoint: seaweedfs_s3:8333
+      bucket: tempo-traces
+      insecure: true
+      # Так как авторизация в SeaweedFS по умолчанию выключена, 
+      # можно указать любые заглушки, но поля обязаны быть заполнены
+      access_key: ""
+      secret_key: ""
+
+    # Локальный кэш (WAL) оставляем на диске для скорости
     wal:
       path: /var/tempo/wal
+
+
+
+
+
+
+
+
+
+
+
+#storage:
+#  trace:
+#    backend: s3
+##    s3:
+#      bucket: tempo-traces            # имя бакета
+#      endpoint: seaweedfs:8333        # эндпоинт S3
+#      access_key: admin               # ваш access key
+#      secret_key: admin               # ваш secret key
+#      insecure: true                  # отключаем HTTPS для внутренней сети
+#      forcepathstyle: true            # для не-Amazon S3 совместимости (SeaweedFS)
+#    wal:
+#      path: /var/tempo/wal
 
 #overrides:
 #  defaults:

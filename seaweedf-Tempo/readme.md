@@ -5,7 +5,7 @@ A production-ready distributed tracing stack using **Grafana Tempo** and **Seawe
 ---
 ## 🚀 Quick Start
 
-### 1. Create overlay networks
+### 1. Create overlay networks 
 
 ```bash
 docker network create --driver overlay --attachable tempo-net
@@ -17,8 +17,8 @@ docker stack deploy -c seaweedf-stack.yml seaweedfs
 ```
 ### 3. Create S3 bucket for traces
 ```bash
-chmod +x s3_bucket.sh
-./s3_bucket.sh
+docker run --rm --network tempo_net curlimages/curl -X POST http://seaweedfs_filer:8888/buckets/tempo-traces/
+
 ```
 ### 4. Deploy Grafana Tempo
 ```bash
@@ -33,3 +33,13 @@ Search by service.name works only after adding overrides and restarting Tempo
 
 Tempo and Grafana must be in the same network (monitoring) for proper communication
 
+###TESTing 🚀🚀🚀  Telemetry Sanity and Pipeline Validation
+```bash
+docker run --rm \
+  --network tempo-net \
+  -p 8080:8080 \
+  -e OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317 \
+  -e OTEL_EXPORTER_OTLP_INSECURE=true \
+  jaegertracing/example-hotrod:latest \
+  all
+```

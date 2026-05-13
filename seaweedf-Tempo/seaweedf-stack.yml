@@ -1,38 +1,65 @@
 version: '3.8'
 
 services:
-  seaweedfs:
+  master:
     image: chrislusf/seaweedfs:4.23
-    command: server -s3 -s3.config /etc/seaweedfs/s3_config.json -ip.bind=0.0.0.0 -s3.port=8333
-    configs:
-      - source: s3_config
-        target: /etc/seaweedfs/s3_config.json
-#    environment:
-#      - AWS_ACCESS_KEY_ID=admin
-#      - AWS_SECRET_ACCESS_KEY=admin
-#      - S3_BUCKET=tempo-traces
+    command: "master -ip.bind=0.0.0.0 -ip=seaweedfs_master -mdir=/data -defaultReplication=001"
+    volumes:
+      - seaweed_master_data:/data
     networks:
       - tempo-net
-    ports:
-      - "8333:8333"
-      - "9333:9333"
-      - "8888:8888"
-    volumes:
-      - seaweedfs_data:/data
     deploy:
-      mode: replicated
       replicas: 1
       placement:
         constraints:
-          - node.role == manager
+          - node.role == worker
+
+  volume:
+    image: chrislusf/seaweedfs:4.23
+    command: "volume -mserver=seaweedfs_master:9333 -port=8080 -ip.bind=0.0.0.0 -dir=/data"
+    networks:
+      - tempo-net
+    volumes:
+      - seaweed_data:/data
+    deploy:
+      mode: "global"
+      placement:
+        constraints:
+          - node.role == worker
+
+  filer:
+    image: chrislusf/seaweedfs:4.23
+    command: "filer -master=seaweedfs_master:9333 -ip.bind=0.0.0.0 -defaultStoreDir=/data/filerdb -s3"
+    volumes:
+      - seaweed_filer_data:/data
+    networks:
+      - tempo-net
+    deploy:
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
+
+  s3:
+    image: chrislusf/seaweedfs:4.23
+    command: "s3 -filer=seaweedfs_filer:8888 -ip.bind=0.0.0.0 -port=8333"
+    networks:
+      - tempo-net
+    ports:
+      - 8333:8333
+    deploy:
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
+
+
+volumes:  # тома для сохраности данных при перезапуске контейнера 
+  seaweed_data:
+    driver: local
+  seaweed_master_data: # Для Мастера (метаданные кластера)
+  seaweed_filer_data:  # Для Филера (структура бакетов)
 
 networks:
   tempo-net:
     external: true
-
-volumes:
-  seaweedfs_data:
-
-configs:
-  s3_config:
-    file: ./s3_config.json

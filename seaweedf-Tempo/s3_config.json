@@ -7,5 +7,6 @@
       ],
       "actions": ["Admin", "Read", "Write", "List"]
     }
-  ]
+  ],
+  "signingKey": "7a1cf430997dd3050d9dac7e3ccf4ef8d52a7d174c54ede814616719178e40a8"
 }
